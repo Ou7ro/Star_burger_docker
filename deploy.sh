@@ -4,7 +4,7 @@ set -euo pipefail
 cd /opt/Star_burger_docker
 
 echo "[1/8] git pull"
-git pull --rebase
+git pull origin main
 
 echo "[2/8] Проверка переменных окружения"
 if [ ! -f ./backend/.env ]; then
