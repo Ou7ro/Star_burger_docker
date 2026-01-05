@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     python3-dev \
-    python3.11-venv \
+    python3-venv \
     git \
     && rm -rf /var/lib/apt/lists/*
 
