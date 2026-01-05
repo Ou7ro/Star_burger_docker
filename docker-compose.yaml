@@ -4,9 +4,9 @@ services:
     image: postgres:18-alpine
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-pavel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-4466}
+      POSTGRES_DB: ${POSTGRES_DB:-star_burger}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -14,6 +14,32 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  backend:
+    container_name: starburger_backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - static_volume:/opt/Star_burger_docker/staticfiles
+      - media_volume:/opt/Star_burger_docker/media
+    env_file: .env
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-pavel}:${POSTGRES_PASSWORD:-4466}@db:5432/${POSTGRES_DB:-star_burger}
+      - DEBUG=False
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      bash -c "
+      echo 'Ожидание базы...' &&
+      while ! pg_isready -h db -U ${POSTGRES_USER:-pavel} -d ${POSTGRES_DB:-star_burger}; do
+        sleep 2
+      done &&
+      echo 'База готова, запуск gunicorn...' &&
+      gunicorn --workers 3 --bind 0.0.0.0:8000 --access-logfile - star_burger.wsgi:application
+      "
+    restart: always
 
   frontend:
     container_name: starburger_frontend
@@ -27,23 +53,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
-
-  backend:
-    container_name: starburger_backend
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    volumes:
-      - static_volume:/opt/Star_burger_docker/staticfiles
-      - media_volume:/opt/Star_burger_docker/media
-    env_file: .env
-    environment:
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-postgres}
-      - DEBUG=False
     depends_on:
-      db:
-        condition: service_healthy
-    command: gunicorn --workers 3 --bind 0.0.0.0:8000 star_burger.wsgi:application
+      backend:
+        condition: service_started
     restart: always
 
 volumes:

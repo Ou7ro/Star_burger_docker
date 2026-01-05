@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     python3-venv \
     git \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m venv /opt/venv
@@ -23,4 +24,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "star_burger.wsgi:application"]
+CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "star_burger.wsgi:application"]
