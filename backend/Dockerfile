@@ -1,27 +1,23 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
 WORKDIR /opt/Star_burger_docker
 
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
-
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libpq-dev \
-    python3-dev \
-    python3-venv \
-    git \
-    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
-
-RUN python -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+RUN mkdir -p /opt/Star_burger_docker/staticfiles \
+    /opt/Star_burger_docker/media \
+    /opt/Star_burger_docker/bundles
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
 EXPOSE 8000
 
-CMD ["gunicorn", "--workers", "3", "--bind", "0.0.0.0:8000", "--access-logfile", "-", "star_burger.wsgi:application"]
+CMD ["python", "-m", "gunicorn", "star_burger.wsgi:application", "--bind", "0.0.0.0:8000"] 

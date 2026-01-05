@@ -1,18 +1,37 @@
-FROM node:16-alpine as builder
+FROM node:16-alpine as build
 
-WORKDIR /opt/Star_burger_docker
+WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci --dev
+RUN npm install
 
 COPY . .
 
-RUN ./node_modules/.bin/parcel build bundles-src/index.html --dist-dir bundles --public-url="./"
+RUN mkdir -p static
+RUN touch static/icon.png
+
+RUN npm run build
+
+RUN ls -la bundles/
+RUN ls -la static/
 
 FROM nginx:alpine
 
-COPY --from=builder /opt/Star_burger_docker/bundles /usr/share/nginx/html/bundles
+RUN mkdir -p /usr/share/nginx/html/static
+RUN mkdir -p /usr/share/nginx/html/media
+RUN mkdir -p /usr/share/nginx/html/bundles
+
+COPY --from=build /app/bundles/ /usr/share/nginx/html/bundles/
+COPY --from=build /app/index.html /usr/share/nginx/html/index.html
+COPY --from=build /app/static/ /usr/share/nginx/html/static/
+
+RUN touch /usr/share/nginx/html/bundles/index.js
+RUN touch /usr/share/nginx/html/bundles/index.css
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+RUN ls -la /usr/share/nginx/html/
+RUN ls -la /usr/share/nginx/html/bundles/
 
 EXPOSE 80
 
