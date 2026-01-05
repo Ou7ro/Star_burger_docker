@@ -1,0 +1,18 @@
+FROM node:18-bookworm-slim AS build
+WORKDIR /app
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+  python3 build-essential ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV PYTHON=/usr/bin/python3
+ENV npm_config_python=/usr/bin/python3
+
+COPY package*.json ./
+RUN npm ci --no-audit --fund=false
+
+COPY bundles-src ./bundles-src
+COPY assets ./assets
+
+RUN npx parcel build bundles-src/index.js --public-url /bundles/ --dist-dir dist --no-source-maps
