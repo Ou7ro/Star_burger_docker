@@ -10,7 +10,7 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pavel}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -43,7 +43,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: bash -c "gunicorn --workers 3 --bind 0.0.0.0:8000 star_burger.wsgi:application"
+    command: gunicorn --workers 3 --bind 0.0.0.0:8000 star_burger.wsgi:application
     restart: always
 
 volumes:
