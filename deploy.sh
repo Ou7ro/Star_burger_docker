@@ -19,8 +19,8 @@ npx parcel build bundles-src/index.js --public-url /bundles/ --dist-dir bundles 
 cd ..
 
 echo "[4/8] Build & up Docker"
-docker compose build
-docker compose up -d
+docker-compose build
+docker-compose up -d
 
 echo "[5/8] Ожидание готовности PostgreSQL..."
 sleep 15
@@ -28,26 +28,26 @@ sleep 15
 echo "[6/8] Импорт dump.sql (если требуется)"
 if [ "${IMPORT_DUMP:-false}" = "true" ] && [ -f "dump.sql" ]; then
     echo "Импорт dump.sql в базу данных..."
-    docker compose exec -T db psql -U pavel -d star_burger < dump.sql
+    docker-compose exec -T db psql -U pavel -d star_burger < dump.sql
     echo "Дамп импортирован"
 
     sed -i 's/IMPORT_DUMP=true/IMPORT_DUMP=false/' ./backend/.env
 fi
 
 echo "[7/8] Django миграции и статика"
-docker compose exec -T backend python manage.py migrate --noinput
-docker compose exec -T backend python manage.py collectstatic --noinput
+docker-compose exec -T backend python manage.py migrate --noinput
+docker-compose exec -T backend python manage.py collectstatic --noinput
 
 echo "[8/8] Перезагрузка nginx и завершение"
-docker compose restart backend
+docker-compose restart backend
 sudo nginx -t && sudo systemctl reload nginx
 
-echo "Готово! Проект развернут"
-echo "Доступ по адресам:"
+echo "✅ Готово! Проект развернут"
+echo "🌐 Доступ по адресам:"
 echo "   - https://ou7ro.ru"
 echo "   - https://www.ou7ro.ru"
 echo "   - http://89.23.99.228 (редирект на HTTPS)"
 echo ""
-echo "Проверка статуса:"
-echo "   docker compose ps"
+echo "📊 Проверка статуса:"
+echo "   docker-compose ps"
 echo "   sudo systemctl status nginx"
