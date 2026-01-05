@@ -7,7 +7,7 @@ RUN npm ci --dev
 
 COPY . .
 
-RUN ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
+RUN ./node_modules/.bin/parcel build bundles-src/index.html --dist-dir bundles --public-url="./"
 
 FROM nginx:alpine
 
