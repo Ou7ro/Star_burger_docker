@@ -41,14 +41,16 @@ services:
     restart: unless-stopped
     networks: [app-net]
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: ../docker/Dockerfile.frontend
-    ports:
-      - "127.0.0.1:3000:80"
-    restart: unless-stopped
-    networks: [app-net]
+  frontend-builder:
+      build:
+        context: ./frontend
+        dockerfile: ../docker/Dockerfile.frontend
+      volumes:
+        - ./static_bundles:/output
+      command: sh -c "cp -r /app/dist/* /output/ && echo 'Frontend built successfully'"
+      restart: "no"
+      networks: [app-net]
 
 volumes:
   postgres_data:
+  bundles_data:
