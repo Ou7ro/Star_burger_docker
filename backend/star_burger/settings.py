@@ -146,5 +146,4 @@ INTERNAL_IPS = [
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "backend", "foodcartapp", "static"),
-    os.path.join(BASE_DIR, "bundles"),
 ]
