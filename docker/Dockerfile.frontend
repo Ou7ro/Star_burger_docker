@@ -13,7 +13,6 @@ COPY package*.json ./
 RUN npm ci --no-audit --fund=false
 
 COPY bundles-src ./bundles-src
-COPY assets ./assets
 
 RUN npx parcel build bundles-src/index.js --public-url /bundles/ --dist-dir /app/dist --no-source-maps
 
