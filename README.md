@@ -149,38 +149,109 @@ Parcel будет следить за файлами в каталоге `bundle
 ./node_modules/.bin/parcel build bundles-src/index.js --dist-dir bundles --public-url="./"
 ```
 
-Настроить бэкенд: создать файл `.env` в каталоге `star_burger/` со следующими настройками:
+Настроить бэкенд: создать файл `.env` со следующими настройками:
 
 - `DEBUG` — дебаг-режим. Поставьте `False`.
 - `SECRET_KEY` — секретный ключ проекта. Он отвечает за шифрование на сайте. Например, им зашифрованы все пароли на вашем сайте.
 - `ALLOWED_HOSTS` — [см. документацию Django](https://docs.djangoproject.com/en/5.2/ref/settings/#allowed-hosts)
 
-## Быстрое обновление на сервере
+## Деплой на сервере
 
-Скрипт расположен в домашней директории на сервере `deploy_star_burger.sh`.
-
-- Скрипт автоматически:
-
-- Обновит код из репозитория
-
-- Установит зависимости Python
-
-- Применит миграции базы данных
-
-- Соберёт статику Django
-
-- Перезапустит Gunicorn и Nginx
-
-Для его работы достаточно ввести в терминал:
+1. **Установка зависимостей**:
 
 ```bash
-./deploy_star_burger.sh
+sudo apt update
+sudo apt install -y nginx git docker.io docker-compose
+cd /opt
+git clone https://github.com/Ou7ro/Star_burger_docker.git
+cd Star_burger_docker
 ```
 
-## Цели проекта
+2. Создать env:
 
-Код написан в учебных целях — это урок в курсе по Python и веб-разработке на сайте [Devman](https://dvmn.org). За основу был взят код проекта [FoodCart](https://github.com/Saibharath79/FoodCart).
+```bash
+nano .env
+```
 
-Где используется репозиторий:
+Наполение должно быть следующего формата:
 
-- Второй и третий урок [учебного курса Django](https://dvmn.org/modules/django/)
+```text
+SECRET_KEY=Ваш_секретный_ключ  # Обязательно
+YANDEX_API_KEY=ваш_ключ_яндекс_геокодера  # Обязательно для работы геокодера
+ALLOWED_HOSTS=ваш_домен.ru,www.ваш_домен.ru,IP_адрес  # Обязательно для продакшена
+DEBUG=False  # Обязательно для продакшена
+ROLLBAR_TOKEN=ваш_токен  # Опционально, для мониторинга ошибок
+DATABASE_URL=postgres://pavel:4466@db:5432/star_burger  # Обязательно
+POSTGRES_USER=pavel  # Опционально, если отличается
+POSTGRES_PASSWORD=4466  # Опционально, если отличается
+POSTGRES_DB=star_burger  # Опционально, если отличается
+ROLLBAR_ENVIRONMENT=production  # Опционально
+```
+
+3. Настройка nginx:
+
+Копируем и настраиваем конфиг
+
+```bash
+sudo cp /opt/Star_burger_docker/nginx_example.conf /etc/nginx/sites-available/star-burger.conf
+sudo ln -s /etc/nginx/sites-available/star-burger.conf /etc/nginx/sites-enabled/
+```
+
+Проверяем и перезагружаем
+
+```bash
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+4. Настройка SSL (HTTPS):
+Устанавливаем Certbot
+
+```bash
+sudo apt update
+sudo apt install certbot python3-certbot-nginx -y
+```
+
+Получаем сертификат (замените domen.ru на ваш домен)
+
+```bash
+sudo certbot --nginx -d domen.ru -d www.domen.ru
+```
+
+Проверь пути к SSL сертификатам в nginx.conf:
+
+```bash
+ssl_certificate /etc/letsencrypt/live/domen.ru/fullchain.pem;
+ssl_certificate_key /etc/letsencrypt/live/domen.ru/privkey.pem;
+```
+
+5. Перенос данных (если есть дамп):
+
+Перенесите файл dump.sql в директорию /opt/Star_burger_docker
+
+При первом запуске скрипт автоматически загрузит дамп в БД
+
+После успешного деплоя удалите дамп, чтобы избежать повторной загрузки:
+
+```bash
+rm /opt/Star_burger_docker/dump.sql
+```
+
+6. Запуск приложения:
+
+```bash
+cd /opt/Star_burger_docker
+chmod +x deploy.sh  # Делаем скрипт исполняемым
+./deploy.sh  # Запускаем деплой
+```
+
+Примечания:
+
+- Убедитесь, что в настройках домена A-запись указывает на IP вашего сервера
+
+- Для доступа к админке Django потребуется создать суперпользователя:
+
+```bash
+docker-compose exec backend python manage.py createsuperuser
+```
+
